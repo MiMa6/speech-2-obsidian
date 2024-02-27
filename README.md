@@ -1,6 +1,6 @@
-# Obsidian automation
+# [Obsidian](https://obsidian.md/) workflow automation
 
-## Speech to text (OpenAI API)
+## [Speech to text (OpenAI API)](https://platform.openai.com/docs/guides/speech-to-text)
 
 Speech-to-text.py script saves speech (.webm audio file) as text (.md) from Audios/Translate to Audios/SpeechToText inside your obsidian vault
 
