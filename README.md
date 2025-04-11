@@ -25,7 +25,7 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/MiMa6/obsidian-automation.git
+git clone https://github.com/MiMa6/speech-2-obsidian.git
 cd obsidian-automation
 ```
 
