@@ -37,3 +37,9 @@ wheels/
 
 # Obsidian
 .obsidian/
+
+# Cursor
+.cursorrules
+
+# OS
+Thumbs.db
