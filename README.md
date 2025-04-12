@@ -9,7 +9,6 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 - 📝 Automatic note creation in your Obsidian vault
 - 🎯 Intelligent file organization for both audio and transcripts
 - ⚡ Quick and easy command-line interface
-- 🎛️ Configurable microphone selection
 
 ## 🚀 Getting Started
 
@@ -26,7 +25,7 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 
 ```bash
 git clone https://github.com/MiMa6/speech-2-obsidian.git
-cd obsidian-automation
+cd speech-2-obsidian
 ```
 
 2. Create and activate a virtual environment:
@@ -47,15 +46,15 @@ pip install -r requirements.txt
 ```env
 OPENAI_API_KEY=your-api-key-here
 OBSIDIAN_VAULT_PATH=/path/to/your/vault
-MICROPHONE_NAME=Your Microphone Name  # Optional: specify your preferred microphone
+USER_PATH==/Users/you
 ```
 
 5. Config your microphone
 
-Edit `src/audio_recorder.py`
+Edit `src/config.py` and update the `AudioConfig` settings:
 
 ```Python
-DEFAULT_MIC_NAME = "For example External USB Microphone"
+MICROPHONE_NAME = "Your Microphone Name"  # For example "External USB Microphone"
 ```
 
 ## 🎮 Usage
