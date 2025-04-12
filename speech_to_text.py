@@ -1,69 +1,121 @@
 import os
+import sys
+import logging
 from dotenv import load_dotenv
 from src.audio_recorder import AudioRecorder
 from src.transcriber import Transcriber
-from src.file_manager import FileManager
+from src.file_manager import FileManager, FileManagerError
+from src.config import Config
+
+
+def setup_logging():
+    """Configure logging for the application."""
+    config = Config.get_instance()
+    log_config = config.log
+
+    # Get log file path (creates log directory if needed)
+    log_file = log_config.get_log_path()
+
+    logging.basicConfig(
+        level=getattr(logging, log_config.LOG_LEVEL),
+        format=log_config.LOG_FORMAT,
+        handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler(log_file)],
+    )
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Logging to file: {log_file}")
+    return logger
+
+
+def load_environment():
+    """Load and validate environment variables."""
+    load_dotenv()
+
+    required_vars = {
+        "OBSIDIAN_VAULT_PATH": os.getenv("OBSIDIAN_VAULT_PATH"),
+        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
+    }
+
+    missing_vars = [var for var, value in required_vars.items() if not value]
+    if missing_vars:
+        raise ValueError(
+            f"Missing required environment variables: {', '.join(missing_vars)}"
+        )
+
+    return required_vars
+
+
+def process_recording(file_manager, recorder, transcriber, logger):
+    """Handle the recording and transcription process."""
+    try:
+        logger.info("Starting new recording session")
+        audio_file = recorder.record()
+
+        logger.info("Converting speech to text")
+        transcript = transcriber.transcribe(audio_file)
+        print(f"\nTranscript: {transcript.text}")
+
+        # Get first three words for file naming
+        title_words = " ".join(transcript.text.split()[:3])
+
+        # Save transcription and move audio file
+        transcription_path = file_manager.save_transcription(transcript, title_words)
+        audio_path = file_manager.move_audio_file(audio_file, title_words)
+
+        logger.info(
+            f"Successfully processed recording:\nTranscription: {transcription_path}\nAudio: {audio_path}"
+        )
+        return True
+
+    except Exception as e:
+        logger.error(f"Error processing recording: {str(e)}", exc_info=True)
+        print(f"\nError: {str(e)}")
+        return False
+
+
+def display_menu():
+    """Display the main menu options."""
+    print("\nAvailable commands:")
+    print("1: Record new audio")
+    print("2: Quit")
+    return input("\nEnter command (1 or 2): ").strip()
 
 
 def main():
-    # Load environment variables
-    load_dotenv()
+    logger = setup_logging()
+    logger.info("Starting Speech-to-Text Converter")
 
-    # Get environment variables
-    OBSIDIAN_VAULT_PATH = os.getenv("OBSIDIAN_VAULT_PATH")
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    # Optional: Get custom microphone name from environment
-    MIC_NAME = os.getenv("MICROPHONE_NAME")  # Will use default if not set
+    try:
+        # Load and validate environment
+        env_vars = load_environment()
 
-    if not OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY environment variable is not set")
-    if not OBSIDIAN_VAULT_PATH:
-        raise ValueError("OBSIDIAN_VAULT_PATH environment variable is not set")
+        # Initialize components
+        file_manager = FileManager(env_vars["OBSIDIAN_VAULT_PATH"])
+        recorder = AudioRecorder(
+            file_manager.audio_input_dir, mic_name=os.getenv("MICROPHONE_NAME")
+        )
+        transcriber = Transcriber(env_vars["OPENAI_API_KEY"])
 
-    # Initialize components
-    file_manager = FileManager(OBSIDIAN_VAULT_PATH)
-    recorder = AudioRecorder(file_manager.audio_input_dir, mic_name=MIC_NAME)
-    transcriber = Transcriber(OPENAI_API_KEY)
+        print("\n=== Speech-to-Text Converter ===")
+        print("This program will record your voice and convert it to text.")
+        print("The recording will automatically stop after 2 seconds of silence.")
 
-    print("\n=== Speech-to-Text Converter ===")
-    print("This program will record your voice and convert it to text.")
-    print("The recording will automatically stop after 2 seconds of silence.")
+        while True:
+            command = display_menu()
 
-    while True:
-        print("\nAvailable commands:")
-        print("1: Record new audio")
-        print("2: Quit")
+            if command == "2":
+                logger.info("User requested to quit")
+                print("Goodbye!")
+                break
+            elif command == "1":
+                process_recording(file_manager, recorder, transcriber, logger)
+            else:
+                print("\nInvalid command. Please enter 1 to record or 2 to quit.")
 
-        command = input("\nEnter command (1 or 2): ").strip()
-
-        if command == "2":
-            print("Goodbye!")
-            break
-        elif command == "1":
-            try:
-                # Record audio
-                print(
-                    "\nStarting new recording (will automatically stop after 2 seconds of silence)..."
-                )
-                audio_file = recorder.record()
-
-                # Transcribe audio
-                print("Converting speech to text...")
-                transcript = transcriber.transcribe(audio_file)
-                print(f"\nTranscript: {transcript.text}")
-
-                # Get first three words for file naming
-                title_words = " ".join(transcript.text.split()[:3])
-
-                # Save transcription and move audio file
-                file_manager.save_transcription(transcript, title_words)
-                file_manager.move_audio_file(audio_file, title_words)
-
-            except Exception as e:
-                print(f"\nError: {str(e)}")
-                print("Please try again.")
-        else:
-            print("\nInvalid command. Please enter 1 to record or 2 to quit.")
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}", exc_info=True)
+        print(f"\nFatal error: {str(e)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

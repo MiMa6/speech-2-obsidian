@@ -94,13 +94,16 @@ class AudioRecorder:
                     while is_recording:
                         time.sleep(0.1)
 
-            thread = threading.Thread(target=audio_input_stream)
+            thread = threading.Thread(
+                target=audio_input_stream, daemon=True
+            )  # Make thread daemon
             thread.start()
 
             try:
                 while True:
                     if time.time() - start_time > MAX_DURATION:
                         print("\nMaximum recording duration reached")
+                        is_recording = False
                         break
 
                     try:
@@ -112,6 +115,7 @@ class AudioRecorder:
                                 silence_start = time.time()
                             elif time.time() - silence_start >= SILENCE_DURATION:
                                 print("\nSilence detected, stopping recording")
+                                is_recording = False
                                 break
                         else:
                             silence_start = None
@@ -121,18 +125,32 @@ class AudioRecorder:
 
             finally:
                 is_recording = False
-                thread.join()
+                if thread.is_alive():
+                    thread.join(timeout=1.0)  # Wait for thread to finish with timeout
 
             if not recording:
                 raise ValueError("No audio was recorded")
 
             recording = np.concatenate(recording)
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"recording_{timestamp}.wav"
-            file_path = os.path.join(self.output_directory, filename)
+            # Modified timestamp format with additional underscores
+            timestamp = datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+            current_date = datetime.now()
 
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            # Create year/month/day directory structure
+            year = current_date.strftime("%Y")
+            month = current_date.strftime("%m")
+            day = current_date.strftime("%d")
+
+            # Construct the full directory path
+            date_dir = os.path.join(self.output_directory, year, month, day)
+
+            # Create all necessary directories
+            os.makedirs(date_dir, exist_ok=True)
+
+            # Create filename and full path
+            filename = f"recording_{timestamp}.wav"
+            file_path = os.path.join(date_dir, filename)
 
             wav.write(file_path, sample_rate, recording)
             print(f"Saved recording to: {file_path}")
