@@ -84,8 +84,10 @@ python speech_to_text.py
 │   ├── audio_recorder.py    # Handles voice recording
 │   ├── transcriber.py       # Manages OpenAI transcription
 │   ├── file_manager.py      # Handles file operations
+│   ├── config.py           # Centralized configuration
 │   └── __init__.py
-├── speech_to_text.py        # Main script
+├── logs/                   # Application logs
+├── speech_to_text.py       # Main script
 ├── requirements.txt
 └── .env
 ```
@@ -101,9 +103,12 @@ python speech_to_text.py
 
 ## 🔧 Configuration
 
-You can adjust these settings in `src/audio_recorder.py`:
+Configuration is now centralized in `src/config.py` using dataclasses:
 
-- `SILENCE_THRESHOLD`: Sensitivity for silence detection (default: 0.02)
-- `SILENCE_DURATION`: How long to wait in silence before stopping (default: 2.0 seconds)
-- `MAX_DURATION`: Maximum recording duration (default: 300 seconds)
-- `DEFAULT_MIC_NAME`: Default microphone to use if none specified
+- `AudioConfig`: Recording settings (silence threshold, duration, etc.)
+- `FileConfig`: File naming and directory structures
+- `LogConfig`: Logging settings and rotation
+
+### 📝 Logging
+
+Logs are automatically saved in the `logs/` directory
