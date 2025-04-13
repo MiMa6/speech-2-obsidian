@@ -4,11 +4,11 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 
 ## ✨ Features
 
-- 🎤 Smart voice recording that automatically stops after silence
-- 🤖 AI-powered transcription using OpenAI's Whisper model
+- 🎤 Smart voice 2 memos
+- ⚡ Quick and easy command-line interface
 - 📝 Automatic note creation in your Obsidian vault
 - 🎯 Intelligent file organization for both audio and transcripts
-- ⚡ Quick and easy command-line interface
+- 🤖 AI-powered transcription using OpenAI's latest Speech to Text models
 
 ## 🚀 Getting Started
 
