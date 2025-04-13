@@ -17,23 +17,36 @@ class FileManager:
     def __init__(self, vault_path: str):
         """Initialize FileManager with vault path and setup logging."""
         self.logger = logging.getLogger(__name__)
-        self.audio_input_dir = os.path.join(vault_path, "Audios/Translate")
-        self.audio_output_dir = os.path.join(vault_path, "Audios/Translated")
-        self.text_output_dir = os.path.join(vault_path, "Audios/SpeechToText")
 
-        try:
-            # Ensure directories exist
-            for directory in [
-                self.audio_input_dir,
-                self.audio_output_dir,
-                self.text_output_dir,
-            ]:
-                os.makedirs(directory, exist_ok=True)
-                self.logger.info(f"Ensured directory exists: {directory}")
-        except PermissionError as e:
-            raise FileManagerError(f"Permission denied creating directories: {e}")
-        except Exception as e:
-            raise FileManagerError(f"Error creating directories: {e}")
+        # Set up directory paths
+        self.audio_input_dir = os.path.join(vault_path, "Audios", "Translate")
+        self.audio_output_dir = os.path.join(vault_path, "Audios", "Translated")
+        self.text_output_dir = os.path.join(vault_path, "Audios", "SpeechToText")
+
+        # Create all required directories
+        self._create_directory_structure()
+
+    def _create_directory_structure(self):
+        """Create all required directories if they don't exist."""
+        directories = [
+            self.audio_input_dir,
+            self.audio_output_dir,
+            self.text_output_dir,
+        ]
+
+        for directory in directories:
+            try:
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                    self.logger.info(f"Created directory: {directory}")
+                else:
+                    self.logger.debug(f"Directory already exists: {directory}")
+            except PermissionError as e:
+                raise FileManagerError(
+                    f"Permission denied creating directory {directory}: {e}"
+                )
+            except Exception as e:
+                raise FileManagerError(f"Error creating directory {directory}: {e}")
 
     def _extract_date_from_filename(
         self, filename: str
@@ -52,9 +65,26 @@ class FileManager:
     def _ensure_valid_path(self, path: str) -> None:
         """Validate and ensure path exists."""
         try:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            directory = os.path.dirname(path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+                self.logger.info(f"Created directory: {directory}")
         except Exception as e:
             raise FileManagerError(f"Error creating directory for path {path}: {e}")
+
+    def _create_date_directory(
+        self, base_dir: str, year: str, month: str, day: str
+    ) -> str:
+        """Create and return a date-based directory structure."""
+        date_dir = os.path.join(base_dir, year, month, day)
+        try:
+            os.makedirs(date_dir, exist_ok=True)
+            self.logger.info(f"Created/verified directory structure: {date_dir}")
+            return date_dir
+        except Exception as e:
+            raise FileManagerError(
+                f"Failed to create directory structure {date_dir}: {e}"
+            )
 
     def save_transcription(self, transcript, title_words: Optional[str] = None) -> str:
         """Save transcription to a markdown file in year/month/day structure."""
@@ -64,14 +94,14 @@ class FileManager:
 
             current_date = datetime.now()
             timestamp = current_date.strftime("%Y_%m_%d__%H_%M")
-
-            # Create year/month/day directory structure
             year = current_date.strftime("%Y")
             month = current_date.strftime("%m")
             day = current_date.strftime("%d")
 
-            date_dir = os.path.join(self.text_output_dir, year, month, day)
-            self._ensure_valid_path(date_dir)
+            # Create the date-based directory structure
+            date_dir = self._create_date_directory(
+                self.text_output_dir, year, month, day
+            )
 
             filename = f"{timestamp}_{title_words}.md"
             file_path = os.path.join(date_dir, filename)
@@ -115,8 +145,10 @@ class FileManager:
                     )
                 timestamp = timestamp_match.group(1)
 
-            date_dir = os.path.join(self.audio_output_dir, year, month, day)
-            self._ensure_valid_path(date_dir)
+            # Create the date-based directory structure
+            date_dir = self._create_date_directory(
+                self.audio_output_dir, year, month, day
+            )
 
             extension = os.path.splitext(source_path)[1]
             new_filename = f"{timestamp}_{title_words}{extension}"

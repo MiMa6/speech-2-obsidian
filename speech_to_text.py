@@ -78,7 +78,58 @@ def display_menu():
     print("\nAvailable commands:")
     print("1: Record new audio")
     print("2: Quit")
-    return input("\nEnter command (1 or 2): ").strip()
+    print("3: Translate existing audio files")
+    return input("\nEnter command (1, 2, or 3): ").strip()
+
+
+def process_existing_audio_files(file_manager, transcriber, logger):
+    """Process all existing audio files in the Translate directory."""
+    try:
+        # Find all audio files
+        audio_files = file_manager.find_audio_files()
+
+        if not audio_files:
+            print("\nNo audio files found in the Translate directory.")
+            return False
+
+        print(f"\nFound {len(audio_files)} audio file(s) to process.")
+
+        for audio_file in audio_files:
+            try:
+                print(f"\nProcessing: {os.path.basename(audio_file)}")
+
+                # Transcribe the audio
+                logger.info(f"Transcribing file: {audio_file}")
+                transcript = transcriber.transcribe(audio_file)
+                print(f"Transcript: {transcript.text}")
+
+                # Get first three words for file naming
+                title_words = " ".join(transcript.text.split()[:3])
+
+                # Save transcription and move audio file
+                transcription_path = file_manager.save_transcription(
+                    transcript, title_words
+                )
+                audio_path = file_manager.move_audio_file(audio_file, title_words)
+
+                logger.info(
+                    f"Successfully processed file:\nTranscription: {transcription_path}\nAudio: {audio_path}"
+                )
+                print("✓ File processed successfully")
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing file {audio_file}: {str(e)}", exc_info=True
+                )
+                print(f"✗ Error processing file: {str(e)}")
+                continue
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Error processing audio files: {str(e)}", exc_info=True)
+        print(f"\nError: {str(e)}")
+        return False
 
 
 def main():
@@ -109,8 +160,13 @@ def main():
                 break
             elif command == "1":
                 process_recording(file_manager, recorder, transcriber, logger)
+            elif command == "3":
+                print("\nProcessing existing audio files...")
+                process_existing_audio_files(file_manager, transcriber, logger)
             else:
-                print("\nInvalid command. Please enter 1 to record or 2 to quit.")
+                print(
+                    "\nInvalid command. Please enter 1 to record, 2 to quit, or 3 to process existing files."
+                )
 
     except Exception as e:
         logger.error(f"Fatal error: {str(e)}", exc_info=True)
