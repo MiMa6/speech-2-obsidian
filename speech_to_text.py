@@ -1,11 +1,11 @@
 import os
 import sys
 import logging
-from dotenv import load_dotenv
 from src.audio_recorder import AudioRecorder
 from src.transcriber import Transcriber
 from src.file_manager import FileManager, FileManagerError
 from src.config import Config
+from src.settings import Settings
 
 
 def setup_logging():
@@ -27,22 +27,13 @@ def setup_logging():
     return logger
 
 
-def load_environment():
-    """Load and validate environment variables."""
-    load_dotenv()
-
-    required_vars = {
-        "OBSIDIAN_VAULT_PATH": os.getenv("OBSIDIAN_VAULT_PATH"),
-        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
-    }
-
-    missing_vars = [var for var, value in required_vars.items() if not value]
-    if missing_vars:
-        raise ValueError(
-            f"Missing required environment variables: {', '.join(missing_vars)}"
-        )
-
-    return required_vars
+def load_settings() -> Settings:
+    """Load and validate settings from environment variables."""
+    try:
+        return Settings()
+    except Exception as e:
+        print(f"Error loading settings: {str(e)}")
+        sys.exit(1)
 
 
 def process_recording(file_manager, recorder, transcriber, logger):
@@ -137,15 +128,15 @@ def main():
     logger.info("Starting Speech-to-Text Converter")
 
     try:
-        # Load and validate environment
-        env_vars = load_environment()
+        # Load and validate settings
+        settings = load_settings()
 
         # Initialize components
-        file_manager = FileManager(env_vars["OBSIDIAN_VAULT_PATH"])
+        file_manager = FileManager(settings.OBSIDIAN_VAULT_PATH)
         recorder = AudioRecorder(
-            file_manager.audio_input_dir, mic_name=os.getenv("MICROPHONE_NAME")
+            file_manager.audio_input_dir, mic_name=settings.MICROPHONE_NAME
         )
-        transcriber = Transcriber(env_vars["OPENAI_API_KEY"])
+        transcriber = Transcriber(settings.OPENAI_API_KEY)
 
         print("\n=== Speech-to-Text Converter ===")
         print("This program will record your voice and convert it to text.")

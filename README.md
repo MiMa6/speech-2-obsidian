@@ -102,11 +102,14 @@ python speech_to_text.py
 
 ## 🔧 Configuration
 
-Configuration is now centralized in `src/config.py` using dataclasses:
+Configuration is managed using Pydantic for robust validation and type safety:
 
+- `Settings`: Environment variables and app settings (in `src/settings.py`)
 - `AudioConfig`: Recording settings (silence threshold, duration, etc.)
 - `FileConfig`: File naming and directory structures
 - `LogConfig`: Logging settings and rotation
+
+All configuration classes use Pydantic's validation to ensure type safety and proper value constraints.
 
 ### 📝 Logging
 
