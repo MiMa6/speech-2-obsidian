@@ -6,6 +6,7 @@ from src.transcriber import Transcriber
 from src.file_manager import FileManager, FileManagerError
 from src.config import Config
 from src.settings import Settings
+from src.voice_memos import find_latest_recording
 
 
 def setup_logging():
@@ -64,13 +65,49 @@ def process_recording(file_manager, recorder, transcriber, logger):
         return False
 
 
+def process_voice_memo(file_manager, transcriber, logger):
+    """Process the latest voice memo from iPhone."""
+    try:
+        # Find latest voice memo
+        latest_memo = find_latest_recording()
+        if not latest_memo:
+            print("\nNo valid voice memo found.")
+            return False
+
+        print(f"\nProcessing latest voice memo: {os.path.basename(latest_memo)}")
+
+        # Transcribe the audio
+        logger.info(f"Transcribing voice memo: {latest_memo}")
+        transcript = transcriber.transcribe(latest_memo)
+        print(f"Transcript: {transcript.text}")
+
+        # Get first three words for file naming
+        title_words = " ".join(transcript.text.split()[:3])
+
+        # Save transcription and copy audio file
+        transcription_path = file_manager.save_transcription(transcript, title_words)
+        audio_path = file_manager.move_audio_file(latest_memo, title_words)
+
+        logger.info(
+            f"Successfully processed voice memo:\nTranscription: {transcription_path}\nAudio: {audio_path}"
+        )
+        print("✓ Voice memo processed successfully")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error processing voice memo: {str(e)}", exc_info=True)
+        print(f"\nError: {str(e)}")
+        return False
+
+
 def display_menu():
     """Display the main menu options."""
     print("\nAvailable commands:")
     print("1: Record new audio")
     print("2: Quit")
-    print("3: Translate existing audio files")
-    return input("\nEnter command (1, 2, or 3): ").strip()
+    print("3: Translate existing audio files in 'Translate' Obsidian folder")
+    print("4: Translate latest audio file in 'Voice memo' App (Mac & iOS)")
+    return input("\nEnter command (1-4): ").strip()
 
 
 def process_existing_audio_files(file_manager, transcriber, logger):
@@ -154,9 +191,12 @@ def main():
             elif command == "3":
                 print("\nProcessing existing audio files...")
                 process_existing_audio_files(file_manager, transcriber, logger)
+            elif command == "4":
+                print("\nProcessing latest iPhone voice memo...")
+                process_voice_memo(file_manager, transcriber, logger)
             else:
                 print(
-                    "\nInvalid command. Please enter 1 to record, 2 to quit, or 3 to process existing files."
+                    "\nInvalid command. Please enter 1 to record, 2 to quit, 3 to process existing files, or 4 for voice memo."
                 )
 
     except Exception as e:
