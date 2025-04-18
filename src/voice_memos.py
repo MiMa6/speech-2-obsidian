@@ -28,9 +28,7 @@ def check_directory_access():
         return True
     except PermissionError:
         print("❌ Permission denied accessing Voice Memos directory.")
-        print(
-            "Please grant Full Disk Access to Terminal/IDE in System Settings > Privacy & Security > Full Disk Access"
-        )
+        print("Please grant access to the Voice Memos directory")
         return False
     except Exception as e:
         print(f"❌ Error accessing Voice Memos directory: {e}")
@@ -57,7 +55,6 @@ def parse_date_from_filename(filename):
 def find_latest_recording():
     if not check_directory_access():
         return None
-        
 
     latest_file = None
     latest_time = None
