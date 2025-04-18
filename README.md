@@ -9,6 +9,8 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 - 📝 Automatic note creation in your Obsidian vault
 - 🎯 Intelligent file organization for both audio and transcripts
 - 🤖 AI-powered transcription using OpenAI's latest Speech to Text models
+- 📱 Process iPhone Voice Memos directly
+- ⚡ Quick and easy command-line interface
 
 ## 🚀 Getting Started
 
@@ -18,6 +20,7 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 - An OpenAI API key
 - Obsidian vault set up on your system
 - A working microphone
+- (Optional) Access to iPhone Voice Memos on macOS
 
 ### 🛠️ Installation
 
@@ -47,6 +50,7 @@ pip install -r requirements.txt
 OPENAI_API_KEY=your-api-key-here
 OBSIDIAN_VAULT_PATH=/path/to/your/vault
 USER_PATH==/Users/you
+VOICE_MEMOS_DIR=/path/to/voice/memos  # For iPhone Voice Memos feature
 ```
 
 5. Config your microphone
@@ -69,6 +73,8 @@ python speech_to_text.py
 
    - Press `1` to start recording
    - Press `2` to quit
+   - Press `3` to process existing obsidian audio files
+   - Press `4` to process latest iPhone voice memo
 
 3. When recording:
    - Start speaking naturally
@@ -83,6 +89,7 @@ python speech_to_text.py
 │   ├── audio_recorder.py    # Handles voice recording
 │   ├── transcriber.py       # Manages OpenAI transcription
 │   ├── file_manager.py      # Handles file operations
+│   ├── voice_memos.py       # Processes iPhone Voice Memos
 │   ├── config.py           # Centralized configuration
 │   └── __init__.py
 ├── logs/                   # Application logs
@@ -96,7 +103,8 @@ python speech_to_text.py
 1. 🎤 **Recording**: Uses your configured microphone to capture audio
 2. 🤖 **Processing**: Automatically detects silence to stop recording
 3. ✨ **Transcription**: Sends audio to OpenAI's Whisper model for accurate transcription
-4. 📝 **Organization**:
+4. 📱 **Voice Memos**: Finds and processes the latest iPhone voice memo
+5. 📝 **Organization**:
    - Transcripts go to `[vault]/Audios/SpeechToText/`
    - Original recordings move to `[vault]/Audios/Translated/`
 
