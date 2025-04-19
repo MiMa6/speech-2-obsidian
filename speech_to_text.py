@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import sounddevice as sd
 from src.audio_recorder import AudioRecorder
 from src.transcriber import Transcriber
 from src.file_manager import FileManager, FileManagerError
@@ -228,6 +229,10 @@ def main():
         logger.error(f"Fatal error: {str(e)}", exc_info=True)
         print(f"\nFatal error: {str(e)}")
         sys.exit(1)
+    finally:
+        # Clean up sounddevice resources
+        sd.stop()
+        sys.exit(0)
 
 
 if __name__ == "__main__":
