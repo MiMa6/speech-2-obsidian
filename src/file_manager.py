@@ -4,7 +4,7 @@ import shutil
 from datetime import datetime
 import re
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 
 class FileManagerError(Exception):
@@ -86,7 +86,12 @@ class FileManager:
                 f"Failed to create directory structure {date_dir}: {e}"
             )
 
-    def save_transcription(self, transcript, title_words: Optional[str] = None) -> str:
+    def save_transcription(
+        self,
+        transcript,
+        title_words: Optional[str] = None,
+        themes: Optional[List[str]] = None,
+    ) -> str:
         """Save transcription to a markdown file in year/month/day structure."""
         try:
             if title_words is None:
@@ -107,8 +112,18 @@ class FileManager:
             file_path = os.path.join(date_dir, filename)
 
             self.logger.info(f"Saving transcription to: {file_path}")
+
+            # Format content with transcription and themes
+            content = [f'"{transcript.text}"']
+
+            # Add themes if provided, each on a new line
+            if themes:
+                content.extend([""] + themes)
+
+            # Write content to file
             with open(file_path, "w", encoding="utf-8") as file:
-                file.write('"' + transcript.text + '"')
+                file.write("\n".join(content))
+
             self.logger.info("Transcription saved successfully")
             return file_path
 
