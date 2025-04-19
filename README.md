@@ -1,6 +1,6 @@
 # 🎙️ Voice-to-Text Obsidian Helper
 
-Turn your voice into Obsidian notes! This Python-based tool makes it super easy to record your thoughts and automatically transcribe them into your Obsidian vault.
+Turn your voice into Obsidian notes! This Python-based tool makes it super easy to record your thoughts, automatically transcribe and organize them cleanly into your Obsidian vault.
 
 ## ✨ Features
 
@@ -9,6 +9,7 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 - 📝 Automatic note creation in your Obsidian vault
 - 🎯 Intelligent file organization for both audio and transcripts
 - 🤖 AI-powered transcription using OpenAI's latest Speech to Text models
+- 🏷️ Automatic theme extraction using GPT-4o
 - 📱 Process iPhone Voice Memos directly
 - ⚡ Quick and easy command-line interface
 
@@ -24,41 +25,40 @@ Turn your voice into Obsidian notes! This Python-based tool makes it super easy 
 
 ### 🛠️ Installation
 
-1. Clone this repository:
+1. Install Obsidian💎:
+
+   - Download and install Obsidian from [https://obsidian.md](https://obsidian.md)
+   - Create a new vault or open an existing one
+   - Note down your vault path for the configuration
+
+2. Clone this repository:
 
 ```bash
 git clone https://github.com/MiMa6/speech-2-obsidian.git
 cd speech-2-obsidian
 ```
 
-2. Create and activate a virtual environment:
+3. Create and activate a virtual environment:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # On macOS/Linux
 ```
 
-3. Install required packages:
+4. Install required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Create a `.env` file in the project root:
+5. Create a `.env` file in the project root:
 
 ```env
 OPENAI_API_KEY=your-api-key-here
 OBSIDIAN_VAULT_PATH=/path/to/your/vault
 USER_PATH==/Users/you
+MICROPHONE_NAME==your-microphone-name
 VOICE_MEMOS_DIR=/path/to/voice/memos  # For iPhone Voice Memos feature
-```
-
-5. Config your microphone
-
-Edit `src/config.py` and update the `AudioConfig` settings:
-
-```Python
-MICROPHONE_NAME = "Your Microphone Name"  # For example "External USB Microphone"
 ```
 
 ## 🎮 Usage
@@ -90,6 +90,7 @@ python speech_to_text.py
 │   ├── transcriber.py       # Manages OpenAI transcription
 │   ├── file_manager.py      # Handles file operations
 │   ├── voice_memos.py       # Processes iPhone Voice Memos
+│   ├── theme_extractor.py   # Extracts themes using GPT-4o
 │   ├── config.py           # Centralized configuration
 │   └── __init__.py
 ├── logs/                   # Application logs
@@ -103,8 +104,9 @@ python speech_to_text.py
 1. 🎤 **Recording**: Uses your configured microphone to capture audio
 2. 🤖 **Processing**: Automatically detects silence to stop recording
 3. ✨ **Transcription**: Sends audio to OpenAI's Whisper model for accurate transcription
-4. 📱 **Voice Memos**: Finds and processes the latest iPhone voice memo
-5. 📝 **Organization**:
+4. 🏷️ **Theme Extraction**: Uses GPT-4o to identify key themes and add them as hashtags
+5. 📱 **Voice Memos**: Finds and processes the latest iPhone voice memo
+6. 📝 **Organization**:
    - Transcripts go to `[vault]/Audios/SpeechToText/`
    - Original recordings move to `[vault]/Audios/Translated/`
 
