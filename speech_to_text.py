@@ -7,6 +7,7 @@ from src.file_manager import FileManager, FileManagerError
 from src.config import Config
 from src.settings import Settings
 from src.voice_memos import find_latest_recording
+from src.theme_extractor import ThemeExtractor
 
 
 def setup_logging():
@@ -37,7 +38,7 @@ def load_settings() -> Settings:
         sys.exit(1)
 
 
-def process_recording(file_manager, recorder, transcriber, logger):
+def process_recording(file_manager, recorder, transcriber, theme_extractor, logger):
     """Handle the recording and transcription process."""
     try:
         logger.info("Starting new recording session")
@@ -47,11 +48,18 @@ def process_recording(file_manager, recorder, transcriber, logger):
         transcript = transcriber.transcribe(audio_file)
         print(f"\nTranscript: {transcript.text}")
 
+        # Extract themes
+        logger.info("Extracting themes from transcript")
+        themes = theme_extractor.extract_themes(transcript.text)
+        print("\nExtracted themes:", ", ".join(themes))
+
         # Get first three words for file naming
         title_words = " ".join(transcript.text.split()[:3])
 
         # Save transcription and move audio file
-        transcription_path = file_manager.save_transcription(transcript, title_words)
+        transcription_path = file_manager.save_transcription(
+            transcript, title_words, themes
+        )
         audio_path = file_manager.move_audio_file(audio_file, title_words)
 
         logger.info(
@@ -65,7 +73,7 @@ def process_recording(file_manager, recorder, transcriber, logger):
         return False
 
 
-def process_voice_memo(file_manager, transcriber, logger):
+def process_voice_memo(file_manager, transcriber, theme_extractor, logger):
     """Process the latest voice memo from iPhone."""
     try:
         # Find latest voice memo
@@ -81,11 +89,18 @@ def process_voice_memo(file_manager, transcriber, logger):
         transcript = transcriber.transcribe(latest_memo)
         print(f"Transcript: {transcript.text}")
 
+        # Extract themes
+        logger.info("Extracting themes from transcript")
+        themes = theme_extractor.extract_themes(transcript.text)
+        print("\nExtracted themes:", ", ".join(themes))
+
         # Get first three words for file naming
         title_words = " ".join(transcript.text.split()[:3])
 
         # Save transcription and copy audio file
-        transcription_path = file_manager.save_transcription(transcript, title_words)
+        transcription_path = file_manager.save_transcription(
+            transcript, title_words, themes
+        )
         audio_path = file_manager.move_audio_file(latest_memo, title_words)
 
         logger.info(
@@ -110,7 +125,7 @@ def display_menu():
     return input("\nEnter command (1-4): ").strip()
 
 
-def process_existing_audio_files(file_manager, transcriber, logger):
+def process_existing_audio_files(file_manager, transcriber, theme_extractor, logger):
     """Process all existing audio files in the Translate directory."""
     try:
         # Find all audio files
@@ -131,12 +146,17 @@ def process_existing_audio_files(file_manager, transcriber, logger):
                 transcript = transcriber.transcribe(audio_file)
                 print(f"Transcript: {transcript.text}")
 
+                # Extract themes
+                logger.info("Extracting themes from transcript")
+                themes = theme_extractor.extract_themes(transcript.text)
+                print("\nExtracted themes:", ", ".join(themes))
+
                 # Get first three words for file naming
                 title_words = " ".join(transcript.text.split()[:3])
 
                 # Save transcription and move audio file
                 transcription_path = file_manager.save_transcription(
-                    transcript, title_words
+                    transcript, title_words, themes
                 )
                 audio_path = file_manager.move_audio_file(audio_file, title_words)
 
@@ -174,6 +194,7 @@ def main():
             file_manager.audio_input_dir, mic_name=settings.MICROPHONE_NAME
         )
         transcriber = Transcriber(settings.OPENAI_API_KEY)
+        theme_extractor = ThemeExtractor(settings.OPENAI_API_KEY)
 
         print("\n=== Speech-to-Text Converter ===")
         print("This program will record your voice and convert it to text.")
@@ -187,13 +208,17 @@ def main():
                 print("Goodbye!")
                 break
             elif command == "1":
-                process_recording(file_manager, recorder, transcriber, logger)
+                process_recording(
+                    file_manager, recorder, transcriber, theme_extractor, logger
+                )
             elif command == "3":
                 print("\nProcessing existing audio files...")
-                process_existing_audio_files(file_manager, transcriber, logger)
+                process_existing_audio_files(
+                    file_manager, transcriber, theme_extractor, logger
+                )
             elif command == "4":
                 print("\nProcessing latest iPhone voice memo...")
-                process_voice_memo(file_manager, transcriber, logger)
+                process_voice_memo(file_manager, transcriber, theme_extractor, logger)
             else:
                 print(
                     "\nInvalid command. Please enter 1 to record, 2 to quit, 3 to process existing files, or 4 for voice memo."
