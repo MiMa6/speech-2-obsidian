@@ -1,4 +1,4 @@
-# 🎙️ Voice-to-Text Obsidian Helper
+# 🎙️ Speech-to-Text Obsidian Helper
 
 Turn your voice into Obsidian notes! This Python-based tool makes it super easy to record your thoughts, automatically transcribe and organize them cleanly into your Obsidian vault.
 
