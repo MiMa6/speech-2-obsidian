@@ -78,7 +78,8 @@ python speech_to_text.py
 
 3. When recording:
    - Start speaking naturally
-   - The recording will automatically stop after 2 seconds of silence
+   - Press `Ctrl+C` to stop recording manually
+   - The recording will automatically stop after 6 seconds of silence
    - Your audio will be transcribed and saved to your Obsidian vault
 
 ## 📁 Project Structure
