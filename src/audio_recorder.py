@@ -6,10 +6,12 @@ import time
 from datetime import datetime
 import scipy.io.wavfile as wav
 import os
+import signal
+
 
 # Audio recording settings
 SILENCE_THRESHOLD = 0.02  # Adjust this value based on your microphone sensitivity
-SILENCE_DURATION = 2.0  # Stop after 2 seconds of silence
+SILENCE_DURATION = 6.0  # Stop after 6 seconds of silence
 MAX_DURATION = 300  # Maximum recording duration in seconds
 DEFAULT_MIC_NAME = (
     "MacBook Pro Microphone"  # Change this to the name of your microphone
@@ -28,6 +30,14 @@ class AudioRecorder:
         """
         self.output_directory = output_directory
         self.mic_name = mic_name or DEFAULT_MIC_NAME
+        self.stop_recording = False
+        # Set up signal handler for graceful shutdown
+        signal.signal(signal.SIGINT, self._signal_handler)
+
+    def _signal_handler(self, signum, frame):
+        """Handle Ctrl+C signal"""
+        print("\nStopping recording...")
+        self.stop_recording = True
 
     def get_mic_device(self):
         """Find the specified microphone device index."""
@@ -64,7 +74,7 @@ class AudioRecorder:
         return np.max(np.abs(data)) < threshold
 
     def record(self):
-        """Record audio until silence is detected."""
+        """Record audio until silence is detected or manually stopped with Ctrl+C."""
         try:
             input_device = self.get_mic_device()
             device_info = sd.query_devices(input_device, "input")
@@ -74,15 +84,14 @@ class AudioRecorder:
             print(f"\nUsing audio device: {device_info['name']}")
             print(f"Sample rate: {sample_rate} Hz")
             print(f"Channels: {channels}")
-            print(
-                "\nStarting recording... (speak now, will stop after 2 seconds of silence)"
-            )
+            print("\nStarting recording... (speak now, press Ctrl+C to stop)")
 
             q = queue.Queue()
             recording = []
             silence_start = None
             is_recording = True
             start_time = time.time()
+            self.stop_recording = False
 
             def audio_input_stream():
                 with sd.InputStream(
@@ -91,18 +100,17 @@ class AudioRecorder:
                     channels=channels,
                     callback=lambda *args: self._audio_callback(*args, q),
                 ):
-                    while is_recording:
+                    while is_recording and not self.stop_recording:
                         time.sleep(0.1)
 
-            thread = threading.Thread(
-                target=audio_input_stream, daemon=True
-            )  # Make thread daemon
+            thread = threading.Thread(target=audio_input_stream, daemon=True)
             thread.start()
 
             try:
                 while True:
-                    if time.time() - start_time > MAX_DURATION:
-                        print("\nMaximum recording duration reached")
+                    if self.stop_recording or time.time() - start_time > MAX_DURATION:
+                        if time.time() - start_time > MAX_DURATION:
+                            print("\nMaximum recording duration reached")
                         is_recording = False
                         break
 
@@ -126,7 +134,7 @@ class AudioRecorder:
             finally:
                 is_recording = False
                 if thread.is_alive():
-                    thread.join(timeout=1.0)  # Wait for thread to finish with timeout
+                    thread.join(timeout=1.0)
 
             if not recording:
                 raise ValueError("No audio was recorded")

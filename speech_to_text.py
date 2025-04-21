@@ -199,7 +199,6 @@ def main():
 
         print("\n=== Speech-to-Text Converter ===")
         print("This program will record your voice and convert it to text.")
-        print("The recording will automatically stop after 2 seconds of silence.")
 
         while True:
             command = display_menu()
