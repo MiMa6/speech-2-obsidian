@@ -94,8 +94,14 @@ class FileManager:
     ) -> str:
         """Save transcription to a markdown file in year/month/day structure."""
         try:
+            # Accept both string and object with .text
+            if isinstance(transcript, str):
+                transcript_text = transcript
+            else:
+                transcript_text = transcript.text
+
             if title_words is None:
-                title_words = " ".join(transcript.text.split()[:3])
+                title_words = " ".join(transcript_text.split()[:3])
 
             current_date = datetime.now()
             timestamp = current_date.strftime("%Y_%m_%d__%H_%M")
@@ -114,7 +120,7 @@ class FileManager:
             self.logger.info(f"Saving transcription to: {file_path}")
 
             # Format content with transcription and themes
-            content = [f'"{transcript.text}"']
+            content = [f'"{transcript_text}"']
 
             # Add themes if provided, each on a new line
             if themes:
