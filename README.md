@@ -2,6 +2,7 @@
 
 Turn your voice into Obsidian notes! This Python-based tool makes it super easy to record your thoughts, automatically transcribe and organize them cleanly into your Obsidian vault.
 
+
 ## ✨ Features
 
 - 🎤 Smart voice 2 memos
@@ -89,6 +90,7 @@ python speech_to_text.py
 ├── src/
 │   ├── audio_recorder.py    # Handles voice recording
 │   ├── transcriber.py       # Manages OpenAI transcription
+│   ├── grammar_restorer.py  # Restores punctuation and paragraphs
 │   ├── file_manager.py      # Handles file operations
 │   ├── voice_memos.py       # Processes iPhone Voice Memos
 │   ├── theme_extractor.py   # Extracts themes using GPT-4o
@@ -103,13 +105,13 @@ python speech_to_text.py
 ## 🎯 How It Works
 
 1. 🎤 **Recording**: Uses your configured microphone to capture audio
-2. 🤖 **Processing**: Automatically detects silence to stop recording
-3. ✨ **Transcription**: Sends audio to OpenAI's Whisper model for accurate transcription
+2. 🤖 **Transcription**: Sends audio to OpenAI's Whisper model for accurate transcription
+3. 🪄 **Grammar & Punctuation Restoration**: Uses OpenAI LLM to add punctuation and paragraph breaks for readability
 4. 🏷️ **Theme Extraction**: Uses GPT-4o to identify key themes and add them as hashtags
-5. 📱 **Voice Memos**: Finds and processes the latest iPhone voice memo
-6. 📝 **Organization**:
+5. 📝 **Organization**:
    - Transcripts go to `[vault]/Audios/SpeechToText/`
    - Original recordings move to `[vault]/Audios/Translated/`
+6. 📱 **Voice Memos**: Finds and processes the latest iPhone voice memo
 
 ## 🔧 Configuration
 
