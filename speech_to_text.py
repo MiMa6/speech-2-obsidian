@@ -9,6 +9,7 @@ from src.config import Config
 from src.settings import Settings
 from src.voice_memos import find_latest_recording
 from src.theme_extractor import ThemeExtractor
+from src.grammar_restorer import GrammarRestorer
 from pydub import AudioSegment
 
 
@@ -40,6 +41,40 @@ def load_settings() -> Settings:
         sys.exit(1)
 
 
+def process_audio_file(
+    audio_file, file_manager, transcriber, grammar_restorer, theme_extractor, logger
+):
+    """Process a single audio file: transcribe, restore grammar, extract themes, save results."""
+    try:
+        logger.info(f"Transcribing file: {audio_file}")
+        transcript = transcriber.transcribe(audio_file)
+        print(f"Transcript: {transcript.text}")
+
+        logger.info("Restoring grammar and punctuation")
+        restored_text = grammar_restorer.restore(transcript.text)
+        print(f"\nRestored Text: {restored_text}")
+
+        logger.info("Extracting themes from restored text")
+        themes = theme_extractor.extract_themes(restored_text)
+        print("\nExtracted themes:", ", ".join(themes))
+
+        title_words = " ".join(restored_text.split()[:3])
+        transcription_path = file_manager.save_transcription(
+            restored_text, title_words, themes
+        )
+        audio_path = file_manager.move_audio_file(audio_file, title_words)
+
+        logger.info(
+            f"Successfully processed file:\nTranscription: {transcription_path}\nAudio: {audio_path}"
+        )
+        print("✓ File processed successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error processing file {audio_file}: {str(e)}", exc_info=True)
+        print(f"✗ Error processing file: {str(e)}")
+        return False
+
+
 def process_recording(
     file_manager, recorder, transcriber, grammar_restorer, theme_extractor, logger
 ):
@@ -47,35 +82,14 @@ def process_recording(
     try:
         logger.info("Starting new recording session")
         audio_file = recorder.record()
-
-        logger.info("Converting speech to text")
-        transcript = transcriber.transcribe(audio_file)
-        print(f"\nTranscript: {transcript.text}")
-
-        # Restore grammar and punctuation
-        logger.info("Restoring grammar and punctuation")
-        restored_text = grammar_restorer.restore(transcript.text)
-        print(f"\nRestored Text: {restored_text}")
-
-        # Extract themes
-        logger.info("Extracting themes from restored text")
-        themes = theme_extractor.extract_themes(restored_text)
-        print("\nExtracted themes:", ", ".join(themes))
-
-        # Get first three words for file naming
-        title_words = " ".join(restored_text.split()[:3])
-
-        # Save transcription and move audio file
-        transcription_path = file_manager.save_transcription(
-            restored_text, title_words, themes
+        return process_audio_file(
+            audio_file,
+            file_manager,
+            transcriber,
+            grammar_restorer,
+            theme_extractor,
+            logger,
         )
-        audio_path = file_manager.move_audio_file(audio_file, title_words)
-
-        logger.info(
-            f"Successfully processed recording:\nTranscription: {transcription_path}\nAudio: {audio_path}"
-        )
-        return True
-
     except Exception as e:
         logger.error(f"Error processing recording: {str(e)}", exc_info=True)
         print(f"\nError: {str(e)}")
@@ -94,52 +108,21 @@ def process_voice_memo(
             return False
 
         print(f"\nProcessing latest voice memo: {os.path.basename(latest_memo)}")
-
-        # Transcribe the audio
-        logger.info(f"Transcribing voice memo: {latest_memo}")
-        transcript = transcriber.transcribe(latest_memo)
-        print(f"Transcript: {transcript.text}")
-
-        # Restore grammar and punctuation
-        logger.info("Restoring grammar and punctuation")
-        restored_text = grammar_restorer.restore(transcript.text)
-        print(f"\nRestored Text: {restored_text}")
-
-        # Extract themes
-        logger.info("Extracting themes from restored text")
-        themes = theme_extractor.extract_themes(restored_text)
-        print("\nExtracted themes:", ", ".join(themes))
-
-        # Get first three words for file naming
-        title_words = " ".join(restored_text.split()[:3])
-
-        # Save transcription and copy audio file
-        transcription_path = file_manager.save_transcription(
-            restored_text, title_words, themes
+        result = process_audio_file(
+            latest_memo,
+            file_manager,
+            transcriber,
+            grammar_restorer,
+            theme_extractor,
+            logger,
         )
-        audio_path = file_manager.move_audio_file(latest_memo, title_words)
-
-        logger.info(
-            f"Successfully processed voice memo:\nTranscription: {transcription_path}\nAudio: {audio_path}"
-        )
-        print("✓ Voice memo processed successfully")
-        return True
-
+        if result:
+            print("✓ Voice memo processed successfully")
+        return result
     except Exception as e:
         logger.error(f"Error processing voice memo: {str(e)}", exc_info=True)
         print(f"\nError: {str(e)}")
         return False
-
-
-def display_menu():
-    """Display the main menu options."""
-    print("\nAvailable commands:")
-    print("1: Record new audio")
-    print("2: Quit")
-    print("3: Translate existing audio files in 'Translate' Obsidian folder")
-    print("4: Translate latest audio file in 'Voice memo' App (Mac & iOS)")
-    print("5: Split audio files in 'Translate' folder (Audio splitter)")
-    return input("\nEnter command (1-5): ").strip()
 
 
 def process_existing_audio_files(
@@ -157,44 +140,15 @@ def process_existing_audio_files(
         print(f"\nFound {len(audio_files)} audio file(s) to process.")
 
         for audio_file in audio_files:
-            try:
-                print(f"\nProcessing: {os.path.basename(audio_file)}")
-
-                # Transcribe the audio
-                logger.info(f"Transcribing file: {audio_file}")
-                transcript = transcriber.transcribe(audio_file)
-                print(f"Transcript: {transcript.text}")
-
-                # Restore grammar and punctuation
-                logger.info("Restoring grammar and punctuation")
-                restored_text = grammar_restorer.restore(transcript.text)
-                print(f"\nRestored Text: {restored_text}")
-
-                # Extract themes
-                logger.info("Extracting themes from restored text")
-                themes = theme_extractor.extract_themes(restored_text)
-                print("\nExtracted themes:", ", ".join(themes))
-
-                # Get first three words for file naming
-                title_words = " ".join(restored_text.split()[:3])
-
-                # Save transcription and move audio file
-                transcription_path = file_manager.save_transcription(
-                    restored_text, title_words, themes
-                )
-                audio_path = file_manager.move_audio_file(audio_file, title_words)
-
-                logger.info(
-                    f"Successfully processed file:\nTranscription: {transcription_path}\nAudio: {audio_path}"
-                )
-                print("✓ File processed successfully")
-
-            except Exception as e:
-                logger.error(
-                    f"Error processing file {audio_file}: {str(e)}", exc_info=True
-                )
-                print(f"✗ Error processing file: {str(e)}")
-                continue
+            print(f"\nProcessing: {os.path.basename(audio_file)}")
+            process_audio_file(
+                audio_file,
+                file_manager,
+                transcriber,
+                grammar_restorer,
+                theme_extractor,
+                logger,
+            )
 
         return True
 
@@ -268,6 +222,17 @@ def split_audio_files_in_translate(file_manager, logger):
         return False
 
 
+def display_menu():
+    """Display the main menu options."""
+    print("\nAvailable commands:")
+    print("1: Record new audio")
+    print("2: Quit")
+    print("3: Translate existing audio files in 'Translate' Obsidian folder")
+    print("4: Translate latest audio file in 'Voice memo' App (Mac & iOS)")
+    print("5: Split audio files in 'Translate' folder (Audio splitter)")
+    return input("\nEnter command (1-5): ").strip()
+
+
 def main():
     logger = setup_logging()
     logger.info("Starting Speech-to-Text Converter")
@@ -286,7 +251,7 @@ def main():
         grammar_restorer = GrammarRestorer(settings.OPENAI_API_KEY)
 
         print("\n=== Speech-to-Text Converter ===")
-        
+
         print("This program will record your voice and convert it to text.")
 
         while True:
@@ -312,7 +277,9 @@ def main():
                 )
             elif command == "4":
                 print("\nProcessing latest iPhone voice memo...")
-                process_voice_memo(file_manager, transcriber, theme_extractor, logger)
+                process_voice_memo(
+                    file_manager, transcriber, grammar_restorer, theme_extractor, logger
+                )
             elif command == "5":
                 print("\nSplitting audio files in Translate folder...")
                 split_audio_files_in_translate(file_manager, logger)
