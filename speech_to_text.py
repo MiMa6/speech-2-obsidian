@@ -277,7 +277,9 @@ def main():
                 )
             elif command == "4":
                 print("\nProcessing latest iPhone voice memo...")
-                process_voice_memo(file_manager, transcriber, theme_extractor, logger)
+                process_voice_memo(
+                    file_manager, transcriber, grammar_restorer, theme_extractor, logger
+                )
             elif command == "5":
                 print("\nSplitting audio files in Translate folder...")
                 split_audio_files_in_translate(file_manager, logger)
